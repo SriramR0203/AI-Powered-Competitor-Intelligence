@@ -39,7 +39,10 @@ springdoc:
 
 app:
   jwt:
-    secret: ${JWT_SECRET}
+    # Production: override JWT_SECRET with a real 64-char secret via environment variable.
+    # Development: falls back to the dev-only secret defined in application-dev.yml.
+    # The fallback here ensures the app starts in dev without requiring any env vars.
+    secret: ${JWT_SECRET:dev-only-jwt-secret-key-do-not-use-in-production-at-least-256-bits}
     expiration-ms: ${JWT_EXPIRATION:86400000}
     refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION:604800000}
   ai:

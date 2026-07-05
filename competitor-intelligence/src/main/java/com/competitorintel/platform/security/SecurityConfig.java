@@ -25,7 +25,10 @@ import java.util.List;
 
 /**
  * Stateless JWT-based Spring Security configuration.
- * Fine-grained access control is handled by @PreAuthorize on individual endpoints.
+ *
+ * PUBLIC_PATHS are listed explicitly so they are always evaluated FIRST,
+ * before any role-based matcher.  The auth endpoints must be permit-all
+ * so that the login / refresh calls work without a token.
  */
 @Configuration
 @EnableWebSecurity
@@ -33,20 +36,32 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    /** Public paths that never require authentication. */
+    /**
+     * Endpoints that are publicly accessible without a JWT.
+     * Both /api/v1/auth/** and /api/auth/** are included so the frontend
+     * works regardless of whether the /v1 prefix is used.
+     */
     private static final String[] PUBLIC_PATHS = {
+            // ── Authentication ───────────────────────────────────────────
             "/api/v1/auth/**",
+            "/api/auth/**",
+            // ── Swagger / OpenAPI ────────────────────────────────────────
             "/swagger-ui/**",
             "/swagger-ui.html",
-            "/api-docs/**",
             "/v3/api-docs/**",
+            "/api-docs/**",
+            "/api-docs",
+            // ── Actuator (health probe only) ─────────────────────────────
             "/actuator/health",
+            "/actuator/info",
+            // ── H2 console (dev only) ────────────────────────────────────
             "/h2-console/**",
+            // ── Spring error page ────────────────────────────────────────
             "/error",
             "/"
     };
 
-    private final UserDetailsServiceImpl userDetailsService;
+    private final UserDetailsServiceImpl  userDetailsService;
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final JwtAuthEntryPoint       jwtAuthEntryPoint;
 
@@ -55,16 +70,20 @@ public class SecurityConfig {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
-            // Allow H2 console iframe
+            // Allow H2 console to render in an iframe (dev only)
             .headers(h -> h.frameOptions(fo -> fo.sameOrigin()))
             .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthEntryPoint))
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                    // Public endpoints — MUST come before any role-based matcher
                     .requestMatchers(PUBLIC_PATHS).permitAll()
-                    .requestMatchers(HttpMethod.GET,    "/api/v1/**").hasAnyRole("ADMIN","ANALYST","VIEWER")
-                    .requestMatchers(HttpMethod.POST,   "/api/v1/**").hasAnyRole("ADMIN","ANALYST")
-                    .requestMatchers(HttpMethod.PUT,    "/api/v1/**").hasAnyRole("ADMIN","ANALYST")
-                    .requestMatchers(HttpMethod.PATCH,  "/api/v1/**").hasAnyRole("ADMIN","ANALYST")
+                    // All OPTIONS pre-flight requests are public
+                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                    // Protected API — role-based
+                    .requestMatchers(HttpMethod.GET,    "/api/v1/**").hasAnyRole("ADMIN", "ANALYST", "VIEWER")
+                    .requestMatchers(HttpMethod.POST,   "/api/v1/**").hasAnyRole("ADMIN", "ANALYST")
+                    .requestMatchers(HttpMethod.PUT,    "/api/v1/**").hasAnyRole("ADMIN", "ANALYST")
+                    .requestMatchers(HttpMethod.PATCH,  "/api/v1/**").hasAnyRole("ADMIN", "ANALYST")
                     .requestMatchers(HttpMethod.DELETE, "/api/v1/**").hasRole("ADMIN")
                     .anyRequest().authenticated()
             )
@@ -96,9 +115,9 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
         cfg.setAllowedOriginPatterns(List.of("*"));
-        cfg.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
+        cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         cfg.setAllowedHeaders(List.of("*"));
-        cfg.setExposedHeaders(List.of("Authorization","X-Total-Count","X-Page-Number","X-Page-Size"));
+        cfg.setExposedHeaders(List.of("Authorization", "X-Total-Count", "X-Page-Number", "X-Page-Size"));
         cfg.setAllowCredentials(true);
         cfg.setMaxAge(3600L);
 

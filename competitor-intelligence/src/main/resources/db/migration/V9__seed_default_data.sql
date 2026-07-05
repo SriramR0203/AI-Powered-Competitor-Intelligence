@@ -6,13 +6,13 @@ INSERT INTO users (username, email, password_hash, first_name, last_name,
                    is_active, is_email_verified, created_at, updated_at, version)
 VALUES
     ('admin',   'admin@competitorintel.com',
-     '$2a$12$tFmZAikHi3ZvmtQMIQHhFOtWPLxunYjM6j6.Qc/VJHd.6X.Lq4xFm',
+     '$2a$12$JBedIS/zeEkzhKwBxOcleu1mqed8qHC5p.ACGUd1x8/LVUCIQPVHG',
      'Admin', 'User', TRUE, TRUE, NOW(), NOW(), 0),
     ('analyst', 'analyst@competitorintel.com',
-     '$2a$12$PoZ1XSmRNqYTEcJ5DtWMcOVKa9wlQSmq1MKT9cRBMBBB.H0zFakvm',
+     '$2a$12$xkVg/hJ.MQyqvrt9rEmN7eAXK3utwLxk/T4hLh2TPfxiIy8JOHKXO',
      'Analyst', 'User', TRUE, TRUE, NOW(), NOW(), 0),
     ('viewer',  'viewer@competitorintel.com',
-     '$2a$12$KtWFrM/d0RYBwLCrGfYLquF/jlTZakAXmwmI6nEBR8Oq13JgcIq5y',
+     '$2a$12$0LomxcBfnevm0dIbCvQQH.AP5Zds0KwheLpMPV9CfSaWoz6xGc2eO',
      'Viewer', 'User', TRUE, TRUE, NOW(), NOW(), 0);
 
 INSERT INTO user_roles (user_id, role)
