@@ -1,9 +1,16 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Test profile — H2 in-memory, mail auto-configuration excluded,
+# schedulers disabled so tests run fast and in isolation.
+# ─────────────────────────────────────────────────────────────────────────────
 spring:
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MySQL;NON_KEYWORDS=USER
     driver-class-name: org.h2.Driver
     username: sa
     password:
+  h2:
+    console:
+      enabled: false
   jpa:
     hibernate:
       ddl-auto: create-drop
@@ -24,6 +31,8 @@ spring:
           auth: false
           starttls:
             enable: false
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration
 
 app:
   jwt:

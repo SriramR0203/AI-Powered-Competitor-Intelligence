@@ -1,24 +1,52 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Production profile — PostgreSQL (Render), all values from environment variables.
+#
+# DATABASE_URL handling:
+#   Render's managed PostgreSQL exposes DATABASE_URL as "postgres://..." .
+#   start.sh converts it to SPRING_DATASOURCE_URL / USERNAME / PASSWORD before
+#   the JVM starts, so those three vars are what this file reads at runtime.
+#   Outside Render, set SPRING_DATASOURCE_URL directly as a full JDBC URL.
+# ─────────────────────────────────────────────────────────────────────────────
 spring:
+
+  # ── Disable H2 entirely in production ──────────────────────────────────────
+  h2:
+    console:
+      enabled: false
+
+  # ── PostgreSQL datasource ───────────────────────────────────────────────────
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:competitor_intel}?useSSL=false&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:competitor_intel}}
+    driver-class-name: org.postgresql.Driver
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME:}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:}}
     hikari:
-      maximum-pool-size: 20
-      minimum-idle: 5
+      maximum-pool-size: 5
+      minimum-idle: 2
       connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # ── JPA ─────────────────────────────────────────────────────────────────────
   jpa:
     hibernate:
       ddl-auto: validate
-    database-platform: org.hibernate.dialect.MySQLDialect
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: false
+
+  # ── Flyway — PostgreSQL migration scripts ───────────────────────────────────
   flyway:
     enabled: true
-    locations: classpath:db/migration
-    baseline-on-migrate: false
+    locations: classpath:db/migration-postgresql
+    baseline-on-migrate: true
+    default-schema: public
+
+  # ── Mail ─────────────────────────────────────────────────────────────────────
+  # MAIL_HOST is optional — leave it unset to skip email delivery entirely.
+  # When unset, the mail health indicator is disabled below so the /actuator/health
+  # endpoint does not report DOWN due to a missing SMTP server.
   mail:
-    host: ${MAIL_HOST:localhost}
+    host: ${MAIL_HOST:}
     port: ${MAIL_PORT:587}
     username: ${MAIL_USERNAME:}
     password: ${MAIL_PASSWORD:}
@@ -29,10 +57,43 @@ spring:
           starttls:
             enable: true
 
-server:
-  port: ${SERVER_PORT:8080}
+  # ── Thymeleaf — enable template caching in production ──────────────────────
+  thymeleaf:
+    cache: true
 
+# ── Server ───────────────────────────────────────────────────────────────────
+server:
+  port: ${PORT:8080}
+  # Required when running behind Render's TLS-terminating reverse proxy so that
+  # Spring correctly reconstructs HTTPS URLs (redirects, Swagger server list, etc.)
+  forward-headers-strategy: native
+
+# ── Actuator ─────────────────────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      # Never expose internal details publicly in production.
+      show-details: never
+  health:
+    # Disable mail health check — SMTP is optional; a missing host must not
+    # cause the Render health probe to fail and trigger a restart loop.
+    mail:
+      enabled: false
+    # Disable H2 health check — H2 is not on the prod classpath path.
+    db:
+      # Spring will still check the *configured* DataSource (PostgreSQL).
+      # This entry is here as documentation; the default is enabled=true.
+      enabled: true
+
+# ── Logging ───────────────────────────────────────────────────────────────────
 logging:
   level:
+    root: WARN
     com.competitorintel: INFO
     org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    org.flywaydb: INFO

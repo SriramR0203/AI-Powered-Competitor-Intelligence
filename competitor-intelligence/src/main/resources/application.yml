@@ -14,6 +14,8 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  # Thymeleaf cache is OFF by default so the dev profile gets live reloads.
+  # application-prod.yml overrides this to true.
   thymeleaf:
     cache: false
   cache:
@@ -23,7 +25,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        # Base exposes health + info only; prod profile keeps the same set.
+        # metrics is deliberately omitted from the public base to avoid
+        # exposing internal counters without authentication.
+        include: health,info
   endpoint:
     health:
       show-details: when-authorized
@@ -39,9 +44,9 @@ springdoc:
 
 app:
   jwt:
-    # Production: override JWT_SECRET with a real 64-char secret via environment variable.
-    # Development: falls back to the dev-only secret defined in application-dev.yml.
-    # The fallback here ensures the app starts in dev without requiring any env vars.
+    # Production MUST override JWT_SECRET via the RENDER environment variable.
+    # The fallback value below is intentionally weak and dev-only — the app
+    # will start locally without requiring any env setup.
     secret: ${JWT_SECRET:dev-only-jwt-secret-key-do-not-use-in-production-at-least-256-bits}
     expiration-ms: ${JWT_EXPIRATION:86400000}
     refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION:604800000}
@@ -61,8 +66,19 @@ app:
     scraping-cron: "0 0 */6 * * *"
     alert-cron: "0 */30 * * * *"
     cleanup-cron: "0 0 2 * * *"
+  cors:
+    # Comma-separated allowed origins.
+    # Local dev (*) allows all origins.
+    # Production (Render): set ALLOWED_ORIGINS to your Vercel frontend URL.
+    # Multiple: https://a.vercel.app,https://custom-domain.com
+    allowed-origins: ${ALLOWED_ORIGINS:*}
 
+# Base logging — conservative defaults.
+# application-dev.yml promotes com.competitorintel to DEBUG and enables SQL logging.
+# application-prod.yml keeps these levels or tightens them further.
 logging:
   level:
-    com.competitorintel: DEBUG
-    org.springframework.security: INFO
+    root: WARN
+    com.competitorintel: INFO
+    org.springframework.web: INFO
+    org.springframework.security: WARN

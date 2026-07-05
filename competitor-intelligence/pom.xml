@@ -76,15 +76,18 @@
         </dependency>
 
         <!-- Database -->
+        <!-- PostgreSQL — used in production (Render) -->
         <dependency>
-            <groupId>com.mysql</groupId>
-            <artifactId>mysql-connector-j</artifactId>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
-        <!-- H2 for dev/test — single declaration, no scope means compile+runtime+test -->
+        <!-- H2 — dev/test only; runtime scope keeps it off the compile classpath
+             and prevents it from being auto-configured in the prod profile -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- Flyway -->
@@ -92,9 +95,11 @@
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
         </dependency>
+        <!-- Flyway PostgreSQL support (Render production) -->
         <dependency>
             <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-mysql</artifactId>
+            <artifactId>flyway-database-postgresql</artifactId>
+            <version>10.15.0</version>
         </dependency>
 
         <!-- JWT -->

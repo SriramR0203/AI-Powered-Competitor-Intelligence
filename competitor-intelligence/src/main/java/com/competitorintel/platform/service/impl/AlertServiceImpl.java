@@ -11,9 +11,10 @@ import com.competitorintel.platform.exception.ResourceNotFoundException;
 import com.competitorintel.platform.mapper.AlertNotificationMapper;
 import com.competitorintel.platform.mapper.AlertRuleMapper;
 import com.competitorintel.platform.service.AlertService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.Nullable;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
@@ -26,7 +27,6 @@ import java.util.List;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class AlertServiceImpl implements AlertService {
 
     private final AlertRuleRepository         ruleRepository;
@@ -37,7 +37,32 @@ public class AlertServiceImpl implements AlertService {
     private final UserRepository              userRepository;
     private final AlertRuleMapper             ruleMapper;
     private final AlertNotificationMapper     notificationMapper;
-    private final JavaMailSender              mailSender;
+
+    /** Optional — not available when spring.mail.host is not configured (e.g. tests). */
+    @Nullable
+    private final JavaMailSender mailSender;
+
+    @Autowired
+    public AlertServiceImpl(
+            AlertRuleRepository ruleRepository,
+            AlertNotificationRepository notificationRepository,
+            AlertSubscriptionRepository subscriptionRepository,
+            IntelligenceEventRepository eventRepository,
+            CompetitorRepository competitorRepository,
+            UserRepository userRepository,
+            AlertRuleMapper ruleMapper,
+            AlertNotificationMapper notificationMapper,
+            @Autowired(required = false) @Nullable JavaMailSender mailSender) {
+        this.ruleRepository         = ruleRepository;
+        this.notificationRepository = notificationRepository;
+        this.subscriptionRepository = subscriptionRepository;
+        this.eventRepository        = eventRepository;
+        this.competitorRepository   = competitorRepository;
+        this.userRepository         = userRepository;
+        this.ruleMapper             = ruleMapper;
+        this.notificationMapper     = notificationMapper;
+        this.mailSender             = mailSender;
+    }
 
     // ------------------------------------------------------------------ //
     //  Rules
@@ -191,6 +216,10 @@ public class AlertServiceImpl implements AlertService {
     }
 
     private void sendEmail(AlertNotification n) {
+        if (mailSender == null) {
+            log.warn("JavaMailSender not configured — skipping email for notification id={}", n.getId());
+            return;
+        }
         SimpleMailMessage msg = new SimpleMailMessage();
         msg.setTo(n.getEmailRecipient());
         msg.setSubject("[Competitor Intel Alert] " + n.getTitle());
