@@ -1,11 +1,14 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Production profile — PostgreSQL (Render), all values from environment variables.
+# Production profile — Neon PostgreSQL, all values from environment variables.
 #
-# DATABASE_URL handling:
-#   Render's managed PostgreSQL exposes DATABASE_URL as "postgres://..." .
-#   start.sh converts it to SPRING_DATASOURCE_URL / USERNAME / PASSWORD before
-#   the JVM starts, so those three vars are what this file reads at runtime.
-#   Outside Render, set SPRING_DATASOURCE_URL directly as a full JDBC URL.
+# SPRING_DATASOURCE_URL must be set in the Render environment to the JDBC
+# connection string copied from the Neon dashboard:
+#   Project → Connection Details → Connection string → JDBC
+#   Format: jdbc:postgresql://<host>/<db>?user=<user>&password=<pass>&sslmode=require
+#
+# No DATABASE_URL conversion is required — Neon provides a ready-to-use JDBC
+# URL.  The individual DB_HOST / DB_PORT / DB_NAME / DB_USERNAME / DB_PASSWORD
+# vars are kept as a fallback for non-Neon environments only.
 # ─────────────────────────────────────────────────────────────────────────────
 spring:
 
@@ -14,7 +17,10 @@ spring:
     console:
       enabled: false
 
-  # ── PostgreSQL datasource ───────────────────────────────────────────────────
+  # ── Neon PostgreSQL datasource ───────────────────────────────────────────────
+  # Primary: SPRING_DATASOURCE_URL — the full JDBC URL from Neon (includes
+  # credentials and sslmode=require in the query string, so username/password
+  # properties below are only needed when using the individual-field fallback).
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:competitor_intel}}
     driver-class-name: org.postgresql.Driver

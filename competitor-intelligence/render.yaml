@@ -3,13 +3,9 @@ services:
   - type: web
     name: competitor-intel-api
 
-    # runtime: docker — Render builds the repo-root Dockerfile and runs the
-    # resulting image.  This is the correct choice when a Dockerfile is present:
-    # it bundles Java 21, curl, the non-root user, start.sh URL conversion, and
-    # the HEALTHCHECK into one reproducible artifact.
-    #
-    # Do NOT use runtime: java alongside a Dockerfile — the two are mutually
-    # exclusive on Render and java-runtime ignores the Dockerfile entirely.
+    # runtime: docker — Render builds the Dockerfile and runs the resulting
+    # image.  This bundles Java 21, curl, the non-root user, and the
+    # HEALTHCHECK into one reproducible artifact.
     runtime: docker
     dockerfilePath: ./Dockerfile
 
@@ -23,18 +19,20 @@ services:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
 
-      # ── Database ─────────────────────────────────────────────────────────────
-      # Render injects DATABASE_URL automatically when a PostgreSQL instance is
-      # attached.  The Dockerfile ENTRYPOINT runs start.sh which converts the
-      # postgres:// scheme to jdbc:postgresql:// before the JVM starts.
-      - key: DATABASE_URL
-        fromDatabase:
-          name: competitor-intel-db
-          property: connectionString
+      # ── Database (Neon PostgreSQL) ────────────────────────────────────────
+      # Paste the JDBC connection string from your Neon dashboard:
+      #   Project → Connection Details → Connection string → JDBC
+      # Format: jdbc:postgresql://<host>/<db>?user=<user>&password=<pass>&sslmode=require
+      #
+      # Set this in Render Dashboard → Service → Environment — never commit
+      # the real value.  No DATABASE_URL conversion is needed; Neon provides
+      # a ready-to-use JDBC URL.
+      - key: SPRING_DATASOURCE_URL
+        sync: false
 
       # ── JWT ──────────────────────────────────────────────────────────────────
       # REQUIRED. Generate: openssl rand -base64 64
-      # Set via Render dashboard Environment tab — never commit the real value.
+      # Set via Render dashboard — never commit the real value.
       - key: JWT_SECRET
         sync: false
 
@@ -45,7 +43,7 @@ services:
         value: "604800000"
 
       # ── CORS ──────────────────────────────────────────────────────────────────
-      # REQUIRED after frontend is deployed.
+      # REQUIRED after the frontend is deployed.
       # Set to your Vercel frontend URL, e.g.: https://competitor-intel.vercel.app
       # Comma-separate multiple origins: https://a.vercel.app,https://custom.com
       - key: ALLOWED_ORIGINS
@@ -58,7 +56,7 @@ services:
         sync: false
 
       # ── AI (optional) ─────────────────────────────────────────────────────────
-      # Leave AI_PROVIDER=mock to use the built-in mock enrichment (no key needed).
+      # Leave AI_PROVIDER=mock to use built-in mock enrichment (no key needed).
       - key: AI_PROVIDER
         value: mock
 
@@ -70,8 +68,8 @@ services:
 
       # ── Mail (optional) ───────────────────────────────────────────────────────
       # Leave MAIL_HOST unset to disable email delivery.  The mail health check
-      # is already disabled in application-prod.yml so a missing host will NOT
-      # cause the /actuator/health probe to fail.
+      # is disabled in application-prod.yml so a missing host will NOT cause the
+      # /actuator/health probe to fail.
       - key: MAIL_HOST
         sync: false
 
@@ -84,10 +82,5 @@ services:
       - key: MAIL_PASSWORD
         sync: false
 
-# ── Managed PostgreSQL Database ───────────────────────────────────────────────
-databases:
-  - name: competitor-intel-db
-    plan: free
-    region: oregon
-    databaseName: competitor_intel
-    user: competitor_user
+# No managed database block — the project uses an external Neon PostgreSQL
+# instance.  Supply SPRING_DATASOURCE_URL in the environment variables above.
