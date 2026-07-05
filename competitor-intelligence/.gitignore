@@ -28,8 +28,15 @@ Thumbs.db
 spring-shell.log
 
 # ── Credentials / Secrets ─────────────────────────────
-# Never commit real application-prod.yml containing real credentials
-# Use environment variables and Docker secrets instead
+# .env files hold real secrets — never commit them.
+# Only .env.example (no real values) is safe to commit.
+.env
+.env.local
+.env.*.local
+*.env
+
+# Never commit a real application-prod.yml containing credentials.
+# Use environment variables and Docker secrets instead.
 
 # ── Docker ────────────────────────────────────────────
 # docker-compose.override.yml contains local overrides only
