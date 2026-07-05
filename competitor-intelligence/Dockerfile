@@ -1,33 +1,38 @@
-# ── Stage 1: build ──────────────────────────────────────────────────────────
+# ── Stage 1: Build ───────────────────────────────────────────────────────────
 FROM eclipse-temurin:21-jdk-jammy AS build
+
 WORKDIR /app
+
 COPY pom.xml .
 COPY src ./src
-# Download dependencies first (cached layer)
-RUN --mount=type=cache,target=/root/.m2 \
-    apt-get update -qq && apt-get install -y --no-install-recommends maven && \
-    mvn dependency:go-offline -q
-RUN --mount=type=cache,target=/root/.m2 \
-    mvn clean package -DskipTests -q
 
-# ── Stage 2: run ─────────────────────────────────────────────────────────────
-FROM eclipse-temurin:21-jre-jammy AS runtime
+RUN apt-get update && \
+    apt-get install -y maven && \
+    mvn dependency:go-offline
+
+RUN mvn clean package -DskipTests
+
+# ── Stage 2: Runtime ─────────────────────────────────────────────────────────
+FROM eclipse-temurin:21-jre-jammy
+
 WORKDIR /app
 
-# Non-root user for security
-RUN groupadd --gid 1001 appgroup && \
-    useradd  --uid 1001 --gid appgroup --shell /bin/false appuser
+# Install curl for healthcheck
+RUN apt-get update && \
+    apt-get install -y curl && \
+    rm -rf /var/lib/apt/lists/*
 
-COPY --from=build --chown=appuser:appgroup /app/target/*.jar app.jar
+# Create non-root user
+RUN groupadd --gid 1001 appgroup && \
+    useradd --uid 1001 --gid appgroup --create-home appuser
+
+COPY --from=build /app/target/*.jar app.jar
 
 USER appuser
+
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD curl -f http://localhost:8080/actuator/health || exit 1
+CMD curl -f http://localhost:${PORT:-8080}/actuator/health || exit 1
 
-ENTRYPOINT ["java", \
-  "-Djava.security.egd=file:/dev/./urandom", \
-  "-XX:+UseContainerSupport", \
-  "-XX:MaxRAMPercentage=75.0", \
-  "-jar", "app.jar"]
+ENTRYPOINT ["sh","-c","java -Dserver.port=${PORT:-8080} -Djava.security.egd=file:/dev/./urandom -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -jar app.jar"]
