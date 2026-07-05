@@ -1,0 +1,35 @@
+# Normalise line endings: store LF in the repo, checkout with native endings
+* text=auto
+
+# Force Unix line endings for shell scripts and config
+*.sh            text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+Dockerfile      text eol=lf
+.gitignore      text eol=lf
+
+# Java / Maven
+*.java          text eol=lf
+*.xml           text eol=lf
+*.sql           text eol=lf
+*.properties    text eol=lf
+
+# Web / TypeScript
+*.ts            text eol=lf
+*.tsx           text eol=lf
+*.js            text eol=lf
+*.jsx           text eol=lf
+*.css           text eol=lf
+*.html          text eol=lf
+*.json          text eol=lf
+*.md            text eol=lf
+
+# Binary — don't touch
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.gif           binary
+*.svg           text eol=lf
+*.ico           binary
+*.jar           binary
+*.class         binary

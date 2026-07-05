@@ -1,0 +1,11 @@
+body { background-color: #f5f6fa; }
+
+.card { border-radius: 12px; }
+
+.navbar-brand { font-size: 1.2rem; letter-spacing: 0.5px; }
+
+#kpiCards .card:hover { transform: translateY(-2px); transition: transform .2s; }
+
+canvas { max-height: 220px; }
+
+.table thead th { font-size: .85rem; text-transform: uppercase; letter-spacing: .5px; }

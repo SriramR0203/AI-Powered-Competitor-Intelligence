@@ -1,0 +1,49 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Development profile — uses H2 in-memory database.
+# All values here are safe to commit; they contain no real secrets.
+# ─────────────────────────────────────────────────────────────────────────────
+spring:
+  datasource:
+    url: jdbc:h2:mem:competitor_intel_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MySQL;NON_KEYWORDS=USER
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  mail:
+    host: localhost
+    port: 1025
+    username:
+    password:
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+server:
+  port: 8080
+
+# Development-only JWT secret — NOT used in production.
+# Production must supply JWT_SECRET via environment variable.
+app:
+  jwt:
+    secret: dev-only-jwt-secret-key-do-not-use-in-production-must-be-256-bits-long
+
+logging:
+  level:
+    com.competitorintel: DEBUG
+    org.flywaydb: INFO
+    org.hibernate.SQL: DEBUG

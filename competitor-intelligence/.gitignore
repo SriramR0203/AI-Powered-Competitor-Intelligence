@@ -1,0 +1,38 @@
+# ── Maven build output ────────────────────────────────
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# ── IDE ───────────────────────────────────────────────
+.idea/
+.idea/**
+*.iml
+*.iws
+*.ipr
+.vscode/
+.eclipse/
+.settings/
+.project
+.classpath
+
+# ── Logs ──────────────────────────────────────────────
+*.log
+logs/
+
+# ── OS ────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Spring Boot ───────────────────────────────────────
+spring-shell.log
+
+# ── Credentials / Secrets ─────────────────────────────
+# Never commit real application-prod.yml containing real credentials
+# Use environment variables and Docker secrets instead
+
+# ── Docker ────────────────────────────────────────────
+# docker-compose.override.yml contains local overrides only
+
+# ── Test reports ──────────────────────────────────────
+surefire-reports/

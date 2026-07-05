@@ -1,0 +1,17 @@
+# Root-level gitignore — catches anything not covered by sub-project ignores
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE root files
+.idea/
+.vscode/
+*.iml
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~

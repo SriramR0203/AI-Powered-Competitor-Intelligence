@@ -1,0 +1,41 @@
+# ── Build output (never commit generated artifacts) ──
+dist/
+dist-ssr/
+build/
+
+# ── Dependencies ──────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ── Environment files (may contain secrets) ───────────
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ── Logs ──────────────────────────────────────────────
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ── Editor / OS ───────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+
+# ── TypeScript ─────────────────────────────────────────
+*.tsbuildinfo
+
+# ── Test coverage ──────────────────────────────────────
+coverage/
