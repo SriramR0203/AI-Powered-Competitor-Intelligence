@@ -3,6 +3,7 @@ package com.competitorintel.platform.config;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
@@ -29,7 +30,15 @@ public class AppProperties {
     /** Minimum acceptable secret length (256 bits = 32 bytes). */
     private static final int MIN_SECRET_LENGTH = 32;
 
-    private final Environment environment;
+    // Field injection is required here. @ConfigurationProperties beans are
+    // instantiated by Spring Boot's binding infrastructure, which does not
+    // participate in the regular constructor-injection lifecycle. Using a
+    // constructor parameter leaves `environment` null when @PostConstruct runs.
+    // @Autowired on a field is populated by the bean factory after construction
+    // and before any @PostConstruct method is called, so the field is always
+    // non-null by the time validateJwtSecret() executes.
+    @Autowired
+    private Environment environment;
 
     private Jwt jwt = new Jwt();
     private Ai ai = new Ai();
@@ -37,10 +46,6 @@ public class AppProperties {
     private Scheduler scheduler = new Scheduler();
     private Alert alert = new Alert();
     private Pagination pagination = new Pagination();
-
-    public AppProperties(Environment environment) {
-        this.environment = environment;
-    }
 
     /**
      * Validates JWT configuration at application startup.
